@@ -2,12 +2,12 @@ import streamlit as st
 import math
 import pandas as pd
 import numpy as np
-import os  # 👈 これを追加（ファイルの場所を特定する機能）
+import os
 
 # --- ページ設定 ---
-st.set_page_config(page_title="DFPP Sim Ver.34", layout="wide")
-st.title("🧮 DFPP Advanced Simulator Ver.34")
-st.markdown("### 画像パス自動補正・完全版")
+st.set_page_config(page_title="DFPP Sim Ver.35", layout="wide")
+st.title("🧮 DFPP Advanced Simulator Ver.35")
+st.markdown("### 流量表示レイアウト改善 & 解説改訂版")
 
 # --- 2カラムレイアウト ---
 left_col, right_col = st.columns([1, 1.3])
@@ -112,7 +112,6 @@ def run_simulation():
         calc_description = f"身長({height}cm)・体重・性別から精密計算"
     else:
         # 2. 簡易式 (身長入力なし = 体重とHtのみ)
-        # BV = Weight / 13
         bv_liter = weight / 13.0
         epv = bv_liter * (1 - ht / 100)
         calc_method_name = "簡易式 (Weight based)"
@@ -167,7 +166,7 @@ else:
         m1.metric("推定循環血漿量 (EPV)", f"{epv:.2f} L", help=f"計算式: {calc_name}")
         m2.metric("必要な総処理量", f"{v_treated:.1f} L", f"{required_pv:.2f} PV", delta_color="inverse")
         
-        # 予想Alb喪失量 (20%製剤換算)
+        # 予想Alb喪失量
         bottles_needed = math.ceil(loss_alb_mass / 10.0)
         m3.metric(
             "予想Alb喪失量", 
@@ -242,24 +241,40 @@ else:
             """, language="text")
 
         # -----------------------------------------------------
-        # 🖼️ 回路図
+        # 🖼️ 回路図と設定流量 (レイアウト変更)
         # -----------------------------------------------------
         st.markdown("---")
         st.subheader("🖼️ 回路図と設定流量")
         
-        # 【修正】クラウド上でも確実に画像を見つける魔法のコード
-        # このファイル(dfpp_app.py)がある場所を特定する
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # その場所にある dfpp_circuit.png を指定する
-        image_path = os.path.join(current_dir, "dfpp_circuit.png")
+        # 左右に分割
+        col_img, col_metrics = st.columns([1, 1])
 
-        try:
-            st.image(image_path, caption="DFPP回路図", width=400)
-        except:
-            st.warning(f"⚠️ 画像が見つかりません。ファイル名を確認してください: {image_path}")
+        # 左側: 画像
+        with col_img:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            image_path = os.path.join(current_dir, "dfpp_circuit.png")
+            try:
+                st.image(image_path, caption="DFPP回路図", use_container_width=True)
+            except:
+                st.warning(f"⚠️ 画像が見つかりません: {image_path}")
+
+        # 右側: 計算された流量
+        with col_metrics:
+            st.markdown("#### ⚙️ 計算された流量")
+            st.metric("🟡 QP (血漿流量)", f"{req_qp:.0f} mL/min", help="分離器への供給流量")
+            st.metric("🔴 QD (廃棄流量)", f"{req_qd:.1f} mL/min", help="成分分離器からの廃棄流量")
+            st.metric("🟢 置換液 (=補充液)", f"{total_waste_vol:.1f} L", help="総廃液量と同じ量を補充します")
+            
+            st.markdown(f"""
+            <div style="background-color:#f0f2f6; padding:10px; border-radius:5px; font-size:0.9em;">
+            <b>設定内容:</b><br>
+            治療時間: {target_time_hr} 時間<br>
+            廃棄率: {discard_ratio_pct} %
+            </div>
+            """, unsafe_allow_html=True)
 
         # -----------------------------------------------------
-        # 📊 処理量シミュレーション (グラフ)
+        # 📊 グラフ
         # -----------------------------------------------------
         st.markdown("---")
         st.subheader("📊 除去量・喪失量シミュレーション")
@@ -303,15 +318,23 @@ else:
             * **RC (Rejection Coefficient)**: 膜で「阻止されて廃棄される」割合 ($RC = 1 - SC$)。
             """)
 
+        # --- 解説文を修正 ---
         with st.expander("⚠️ 4. カタログ値・他サイトとの乖離理由 (重要)", expanded=True):
             st.info("""
-            **「メーカーの計算サイトと結果が違う」** という場合、主に以下の2点が原因です。本アプリは実臨床での安全性を最優先しています。
+            **「メーカーの計算サイトと結果が違う」** 場合、使用しているデータの前提が異なることが主な要因です。
             """)
             st.markdown("""
             #### **① ふるい係数 (SC) の基準差 (In vitro vs In vivo)**
-            * **他サイト**: カタログ仕様値（ウシ血液・In vitro）である **SC=0.6** (EC-20) を採用することが多いです。
-            * **本アプリ**: ヒト血漿での **二次膜形成(Fouling)** を考慮し、実測値に近い **SC=0.4** で厳しく計算しています。
-            * **結果**: 本アプリの方がアルブミン喪失量（補充必要量）が多く算出されます（補充不足による低血圧等を防ぐため）。
+            * **他サイト**: 
+                * 添付文書に記載された **牛アルブミン血清 (In vitro)** のデータである **SC=0.6 (EC-20)** や、
+                * 旭化成カスケードフロー資料にある **SC=0.35 (ヒト血漿 In vitro)** など、
+                * データソースが混在しており、他サイトの予測式もこれら（特に仕様値の0.6）を参照している場合が多いと思われます。
+            
+            * **本アプリ**: 
+                * ヒト血漿での **二次膜形成 (Fouling)** を考慮し、実測値に近い **SC=0.4** で厳しく計算しています。
+            
+            * **結果**: 
+                * 本アプリの方がアルブミン喪失量（補充必要量）が多く算出されます。これは **補充不足による低血圧等のトラブルを防ぐため、安全サイド** の数値を出すように設計しているためです。
 
             #### **② 循環血漿量 (EPV) 計算式の違い**
             * **簡易式**: `体重 ÷ 13`。簡便ですが、肥満や痩せ型で誤差が出ます。
@@ -322,29 +345,18 @@ else:
         with st.expander("🩸 5. 循環血漿量 (EPV) の計算ロジック詳細", expanded=True):
             st.markdown("""
             **EPV (Estimated Plasma Volume)** は、治療のベースとなる「患者さんの体内の血漿総量」です。
-            
-            * **簡易式**: 
-                $$ EPV = \\frac{\\text{Weight}}{13} \\times (1 - Ht/100) $$
-                * 簡便ですが、筋肉量や脂肪量の個人差を無視するため概算になります。
-            
-            * **小川の式 (Ogawa Formula)**:
-                * 日本透析医学会などで推奨される、日本人の体格に基づいた循環血液量(BV)推定式です。
-                * **男性**: $V = 0.168 H^3 + 0.050 W + 0.444$
-                * **女性**: $V = 0.250 H^3 + 0.0625 W + 0.662$
-                * （$H$:身長m, $W$:体重kg）
-                * ここから $EPV = BV \\times (1 - Ht)$ を求めます。より個別化された適正な処理量を決定できます。
+            * **簡易式**: $EPV = \\text{Weight}/13 \\times (1 - Ht/100)$
+            * **小川の式**: 身長・体重・性別から $BV$ を求め、$(1-Ht)$ を掛けて算出します。
             """)
 
         with st.expander("🧮 6. 必要処理量の計算ロジック (One-compartment model) 詳細", expanded=True):
             st.markdown("""
             血液浄化では、浄化された血液が体内に戻って混ざるため、濃度は対数的に減衰します。
-            
             #### **計算式**
             """)
             st.latex(r"V_{treated} = \frac{- EPV \times \ln(1 - RR)}{RC}")
             st.markdown(f"""
-            1.  **$RR$ (Removal Rate)**: 目標除去率（0.7など）。
-            2.  **$\\ln$ (自然対数)**: 「薄まりながら減る」効率低下を補正するために必須です。
+            1.  **$RR$ (Removal Rate)**: 目標除去率。
+            2.  **$\\ln$ (自然対数)**: 「薄まりながら減る」効率低下を補正。
             3.  **$RC$ (Rejection Coefficient)**: 膜の実質的な除去能力 ($1-SC$)。
-                * RCが低い（穴が大きい）と、除去効率が悪いため、同じ除去率を達成するために**大量の処理量**が必要になります。
             """)
