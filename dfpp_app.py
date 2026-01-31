@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 # --- ページ設定 ---
-st.set_page_config(page_title="DFPP Sim Ver.35", layout="wide")
+st.set_page_config(page_title="DFPP Sim Ver.35 信州上田医療センター　腎臓内科", layout="wide")
 st.title("🧮 DFPP Advanced Simulator Ver.35")
 st.markdown("### 流量表示レイアウト改善 & 解説改訂版")
 
@@ -360,3 +360,4 @@ else:
             2.  **$\\ln$ (自然対数)**: 「薄まりながら減る」効率低下を補正。
             3.  **$RC$ (Rejection Coefficient)**: 膜の実質的な除去能力 ($1-SC$)。
             """)
+
