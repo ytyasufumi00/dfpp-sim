@@ -9,7 +9,7 @@ st.set_page_config(page_title="DFPP Sim Ver.36 信州上田医療センター腎
 
 # タイトル
 st.title("🧮 DFPP Advanced Simulator Ver.36 信州上田医療センター腎臓内科")
-st.markdown("### 📱 スマホ最適化（サイドバー入力）版")
+st.markdown("### 📱 2026,2/2更新")
 
 # ==========================================
 # ⬅️ サイドバー：入力パラメータ
@@ -343,4 +343,5 @@ else:
         2.  **$\\ln$ (自然対数)**: 「薄まりながら減る」効率低下を補正。
         3.  **$RC$ (Rejection Coefficient)**: 膜の実質的な除去能力 ($1-SC$)。
         """)
+
 
