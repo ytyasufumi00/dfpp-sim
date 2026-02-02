@@ -36,7 +36,7 @@ with st.sidebar:
         
         # デフォルト設定
         if "EC-20" in membrane_preset:
-            def_sc_target = 0.20
+            def_sc_target = 0.10
             def_sc_alb = 0.40 
             desc = "小孔径: IgG除去は強力だが、二次膜形成によりAlbも抜けやすい(実測SC 0.35~0.4)。"
         elif "EC-30" in membrane_preset:
@@ -343,5 +343,6 @@ else:
         2.  **$\\ln$ (自然対数)**: 「薄まりながら減る」効率低下を補正。
         3.  **$RC$ (Rejection Coefficient)**: 膜の実質的な除去能力 ($1-SC$)。
         """)
+
 
 
