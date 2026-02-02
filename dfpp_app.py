@@ -151,7 +151,7 @@ else:
     # メトリクス表示
     m1, m2, m3 = st.columns(3)
     m1.metric("推定循環血漿量 (EPV)", f"{epv:.2f} L", help=f"計算式: {calc_name}")
-    m2.metric("必要な総処理量", f"{v_treated:.1f} L", f"{required_pv:.2f} PV", delta_color="inverse")
+    m2.metric("必要な血漿処理量", f"{v_treated:.1f} L", f"{required_pv:.2f} PV", delta_color="inverse")
     
     bottles_needed = math.ceil(loss_alb_mass / 10.0)
     m3.metric(
@@ -345,6 +345,7 @@ else:
         2.  **$\\ln$ (自然対数)**: 「薄まりながら減る」効率低下を補正。
         3.  **$RC$ (Rejection Coefficient)**: 膜の実質的な除去能力 ($1-SC$)。
         """)
+
 
 
 
